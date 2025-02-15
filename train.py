@@ -8,6 +8,10 @@ from datasets import load_dataset
 
 # Load and prep dataset
 
+dataset_path = "/root/easy-r1/gsm8k"
+model_name = "/root/easy-r1/weights/Qwen/Qwen2___5-0___5B"
+output_dir="outputs/qwen2.5-0.5b-GRPO"
+
 SYSTEM_PROMPT = """
 Respond in the following format:
 <reasoning>
@@ -39,7 +43,7 @@ def extract_hash_answer(text: str) -> str | None:
 
 # uncomment middle messages for 1-shot prompting
 def get_gsm8k_questions(split = "train") -> MsDataset:
-    data =  load_dataset('/root/projects/trl_integration/gsm8k_zh', split=split)
+    data =  load_dataset(dataset_path, split=split)
     print(data)
     data = data.map(lambda x: { # type: ignore
         'prompt': [
@@ -120,9 +124,6 @@ def xmlcount_reward_func(completions, **kwargs) -> list[float]:
     contents = [completion[0]["content"] for completion in completions]
     return [count_xml(c) for c in contents]
 
-model_name = "/root/weights/Qwen2.5-0.5B-Instruct"
-output_dir="outputs/Qwen-0.5B-GRPO"
-
 training_args = GRPOConfig(
     output_dir=output_dir,
     learning_rate=5e-6,
@@ -138,7 +139,7 @@ training_args = GRPOConfig(
     num_generations=8,
     max_prompt_length=256,
     max_completion_length=512,
-    num_train_epochs=8,
+    num_train_epochs=1,
     save_steps=100,
     max_grad_norm=0.1,
     log_on_each_node=False,
@@ -149,14 +150,13 @@ training_args = GRPOConfig(
 )
 
 swanlab_callback = SwanLabCallback(
-    project="Qwen-R1",
-    experiment_name="0.5B-EN-epoch8",
+    project="Qwen-R1-Zero",
+    experiment_name="0.5B-EN-epoch1",
     description="Qwen2.5-0.5B-GRPO训练，复现Deepseek R1",
     config={
         "model_name": model_name,
-        "dataset": "https://modelers.cn/datasets/ZeyiLin/gsm8k-zh",
+        "dataset": "https://modelscope.cn/datasets/testUser/GSM8K_zh/summary",
     },
-    mode="disabled",
 )
 
 model = AutoModelForCausalLM.from_pretrained(
@@ -180,6 +180,5 @@ trainer = GRPOTrainer(
     args=training_args,
     train_dataset=dataset,
     callbacks=[swanlab_callback],
-    #peft_config=peft_config
 )
 trainer.train()

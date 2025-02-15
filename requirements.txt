@@ -1,0 +1,9 @@
+torch==2.5.1
+torchvision==0.20.1
+transformers==4.48.3
+datasets==2.21.0
+trl==0.14.0
+modelscope==1.22.3
+vllm==0.7.2
+addict==2.4.0
+swanlab==0.4.8
